@@ -121,6 +121,9 @@ class Controller extends EventEmitter {
 
   nextJumpLine = lineId => this.sendJSON( 'lines:next', lineId )
 
+  // playStart = ( speed ) => this.sendJSON('play:start', { speed })
+  // playStop = () => this.sendJSON('play:stop')
+
   /**
    * Convenience method for setting the current shabad.
    * @param shabadId The shabad ID to change the server to.

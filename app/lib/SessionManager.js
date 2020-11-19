@@ -46,6 +46,7 @@ class SessionManager {
       history: new History(),
       settings: {},
       status: null,
+      // playLineTime: 1,
     }
 
     // Send all the current data on connection from a new client
@@ -62,6 +63,8 @@ class SessionManager {
     socket.on( 'history:clear', this.onClearHistory.bind( this ) )
     socket.on( 'banis:current', this.onBani.bind( this ) )
     socket.on( 'settings:all', this.onSettings.bind( this ) )
+    // socket.on('play:start', this.onPlayStart.bind(this))
+    // socket.on('play:stop', this.onPlayStop.bind(this))
   }
 
   /**

@@ -5,7 +5,7 @@ import { Redirect, useLocation } from 'react-router-dom'
 import { string, func, bool } from 'prop-types'
 import classNames from 'classnames'
 import { invert } from 'lodash'
-import { stripVishraams } from 'gurmukhi-utils'
+import { stripVishraams, countSyllables } from 'gurmukhi-utils'
 
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
@@ -18,6 +18,7 @@ import {
   faAngleDoubleRight,
   faExchangeAlt,
   faCheck,
+  faPlay,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { SEARCH_URL } from '../lib/consts'
@@ -197,6 +198,7 @@ export default NavigatorWithAllHotKeys
  * Used by Menu parent to render content in the bottom bar.
  */
 export const Bar = ( { onHover } ) => {
+  const [ isPlaying, setPlaying ] = useState( false )
   const [ autoSelectHover, setAutoSelectHover ] = useState( false )
 
   const content = useContext( ContentContext )
@@ -222,18 +224,34 @@ export const Bar = ( { onHover } ) => {
     } else controller.line( lines[ currentLineIndex - 1 ].id )
   }
 
-  const onDownClick = () => {
+  const onDownClick = useCallback( () => {
     if ( !currentLine ) return
 
     const lastLine = lines[ lines.length - 1 ]
 
-    // Go to the previous shabad if the first line is highlighted (but not for banis)
+    // Go to the next shabad if the last line is highlighted (but not for banis)
     if ( lineId === lastLine.id ) {
       if ( bani ) return
 
       controller.nextShabad( shabad.orderId )
     } else controller.line( lines[ currentLineIndex + 1 ].id )
-  }
+  }, [ currentLine, lines, lineId, bani, shabad ] )
+
+  const togglePlayback = () => setPlaying( !isPlaying )
+
+  useEffect( () => {
+    if ( isPlaying ) {
+      const timeout = countSyllables( currentLine.gurmukhi ) * 0.1 * 1000
+      console.log( timeout )
+
+      // todo: add heavy vishraam times, count currentLine.vishraamFirstLetters
+
+      const autoAdvanceTimer = setTimeout( () => {
+        onDownClick()
+      }, timeout )
+      return () => clearTimeout( autoAdvanceTimer )
+    }
+  }, [ currentLine, isPlaying, shabad ] )
 
   const onAutoToggle = () => {
     if ( shabad ) controller.autoToggleShabad( content )
@@ -282,6 +300,14 @@ export const Bar = ( { onHover } ) => {
         onMouseEnter={() => onHover( 'Next Line' )}
         onMouseLeave={resetHover}
         onClick={onDownClick}
+      />
+
+      <ToolbarButton
+        name="Play"
+        icon={faPlay}
+        onMouseEnter={() => onHover( 'Play/Pause' )}
+        onMouseLeave={resetHover}
+        onClick={togglePlayback}
       />
 
       <ToolbarButton
