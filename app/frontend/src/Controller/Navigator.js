@@ -19,9 +19,10 @@ import {
   faExchangeAlt,
   faCheck,
   faPlay,
+  faStop,
 } from '@fortawesome/free-solid-svg-icons'
 
-import { SEARCH_URL } from '../lib/consts'
+import { SEARCH_URL, LINE_TYPES } from '../lib/consts'
 import { getJumpLines, getNextJumpLine, findLineIndex } from '../lib/utils'
 import controller from '../lib/controller'
 import { LINE_HOTKEYS } from '../lib/keyMap'
@@ -241,17 +242,27 @@ export const Bar = ( { onHover } ) => {
 
   useEffect( () => {
     if ( isPlaying ) {
-      const timeout = countSyllables( currentLine.gurmukhi ) * 0.1 * 1000
-      console.log( timeout )
+      const numSyallables = countSyllables( currentLine.gurmukhi )
+      const numVishraams = currentLine.vishraamFirstLetters.split( ';' ).length - 1
+      // todo: can improve next const by knowing which kind (e.g. rahao, rahao dooja)
+      const numRahaoSyllables = ( currentLine.typeId === LINE_TYPES.rahao ) ? countSyllables( 'rhwau' ) : 0
+      const soundsPerSecond = 9.4 // user customizable
+      const speechTempo = 1 / soundsPerSecond
+      const milliseconds = 1000
+      const timeout = ( numSyallables + numVishraams * 2 + numRahaoSyllables ) * speechTempo * milliseconds
 
-      // todo: add heavy vishraam times, count currentLine.vishraamFirstLetters
+      console.log( '====================================' )
+      console.log( timeout )
+      console.log( '====================================' )
+      // todo: consider correct spacebar / autoselect behavior (currently: stops playing on main line, restarts on jump to line)
+      // todo: continue playing on shabad change, but not source change -- should already not go to next bani because of logic in onDownClick
 
       const autoAdvanceTimer = setTimeout( () => {
         onDownClick()
       }, timeout )
       return () => clearTimeout( autoAdvanceTimer )
     }
-  }, [ currentLine, isPlaying, shabad ] )
+  }, [ currentLine, isPlaying ] )
 
   const onAutoToggle = () => {
     if ( shabad ) controller.autoToggleShabad( content )
@@ -302,13 +313,23 @@ export const Bar = ( { onHover } ) => {
         onClick={onDownClick}
       />
 
-      <ToolbarButton
-        name="Play"
-        icon={faPlay}
-        onMouseEnter={() => onHover( 'Play/Pause' )}
-        onMouseLeave={resetHover}
-        onClick={togglePlayback}
-      />
+      { isPlaying ? (
+        <ToolbarButton
+          name="Stop"
+          icon={faStop}
+          onMouseEnter={() => onHover( 'Stop' )}
+          onMouseLeave={resetHover}
+          onClick={togglePlayback}
+        />
+      ) : (
+        <ToolbarButton
+          name="Play"
+          icon={faPlay}
+          onMouseEnter={() => onHover( 'Play' )}
+          onMouseLeave={resetHover}
+          onClick={togglePlayback}
+        />
+      )}
 
       <ToolbarButton
         className="autoselect"
